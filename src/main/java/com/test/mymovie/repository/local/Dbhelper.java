@@ -24,7 +24,7 @@ public class Dbhelper {
     private Context context;
     private MovieDb db;
 
-    private Dbhelper(Context ctx)
+    public Dbhelper(Context ctx)
     {
         context = ctx;
         db = Room.databaseBuilder(context.getApplicationContext(),
@@ -104,12 +104,12 @@ public class Dbhelper {
 
                     @Override
                     public void onComplete() {
-                        Log.d("Roomdb", "Added all movies");
+                        //Log.d("Roomdb", "Added all movies");
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.d("Roomdb", "Error while adding all movies");
+                        //Log.d("Roomdb", "Error while adding all movies");
                     }
                 });
     }

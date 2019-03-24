@@ -1,6 +1,8 @@
 package com.test.mymovie;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,12 +12,15 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.test.mymovie.customview.TabPagerAdapter;
 import com.test.mymovie.fragments.FavouriteMovies;
 import com.test.mymovie.fragments.TopMovies;
+import com.test.mymovie.presenter.main.MainActivityPresenter;
+import com.test.mymovie.presenter.main.MainActivityViewCallback;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MainActivityViewCallback {
 
     public static Context context;
     Toolbar toolbar;
@@ -23,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     ViewPager viewPager;
     SearchView searchView;
     LinearLayout mainLayout;
+    MainActivityPresenter presenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
+        presenter = new MainActivityPresenter(this);
         initToolbar();
         initTab();
         initSearch();
@@ -52,9 +59,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 CharSequence searchtext = searchView.getQuery();
+                presenter.onSearchClick(searchtext.toString());
                 hideKeyboard();
-                TopMovies.getInstance().showSearchResult(searchtext.toString());
-                searchView.setQuery("", false);
+
             }
         });
         searchView.setFocusable(false);
@@ -67,6 +74,14 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setTitle(R.string.app_title);
+    }
+
+    //check if internet is available or not
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     //initialise tabs - TopMovies & Favourite
@@ -83,11 +98,11 @@ public class MainActivity extends AppCompatActivity {
             public void onPageSelected(int i) {
                 if(i == 0)
                 {
-                    TopMovies.getInstance().updateFragment();
+                    presenter.showTopMovies();
                 }
                 else if(i==1)
                 {
-                    FavouriteMovies.getInstance().updateFragment();
+                    presenter.showFavouriteMovies();
                 }
             }
 
@@ -105,5 +120,18 @@ public class MainActivity extends AppCompatActivity {
         if (imm != null) {
             imm.hideSoftInputFromWindow(mainLayout.getWindowToken(), 0);
         }
+    }
+
+    @Override
+    public void onSearchSuccess(String sText) {
+        TopMovies.getInstance().showSearchResult(sText);
+        hideKeyboard();
+        searchView.setQuery("", false);
+    }
+
+    @Override
+    public void onSearchError() {
+        hideKeyboard();
+        Toast.makeText(MainActivity.this, "Enter valid input", Toast.LENGTH_SHORT).show();
     }
 }
